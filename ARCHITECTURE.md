@@ -147,33 +147,8 @@ src/
 
 ### MySQL - 主数据库
 
-**用户表 (users)**
-```sql
-CREATE TABLE users (
-    id BIGINT PRIMARY KEY AUTO_INCREMENT,
-    username VARCHAR(50) UNIQUE NOT NULL,
-    email VARCHAR(100) UNIQUE NOT NULL,
-    password_hash VARCHAR(255) NOT NULL,
-    kyc_status ENUM('pending', 'approved', 'rejected'),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-);
-```
-
-**钱包表 (wallets)**
-```sql
-CREATE TABLE wallets (
-    id BIGINT PRIMARY KEY AUTO_INCREMENT,
-    user_id BIGINT NOT NULL,
-    name VARCHAR(100) NOT NULL,
-    address VARCHAR(255) NOT NULL,
-    chain_type ENUM('bitcoin', 'ethereum', 'bsc'),
-    encrypted_private_key TEXT,
-    is_active BOOLEAN DEFAULT TRUE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id)
-);
-```
+[数据库设计](./DATABASE.md) - 基于PostgreSQL的数据库设计
+[数据库运维](./DATABASE-OPERATIONS.md) - 基于PostgreSQL的数据运维计划
 
 ### Redis - 缓存层
 
