@@ -44,7 +44,7 @@
 - 丰富的加密库支持
 
 **核心技术**
-- **Framework**: Flutter 3.8
+- **Framework**: Flutter 3.35
 - **状态管理**: Provider / Riverpod
 - **网络请求**: Dio
 - **本地存储**: Hive / SQLite

@@ -29,7 +29,7 @@
 
 ### 环境要求
 
-- Flutter 3.8+
+- Flutter 3.35
 - Java 21+
 - Node.js 18+
 - Docker

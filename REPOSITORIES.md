@@ -55,7 +55,7 @@ kawaii-docs/
 
 | 属性 | 值 |
 |------|---|
-| **技术栈** | Flutter 3.8 + Dart |
+| **技术栈** | Flutter 3.35 + Dart |
 | **平台** | iOS / Android |
 | **主要功能** | 钱包管理、转账、支付 |
 | **部署** | App Store / Google Play |
@@ -87,7 +87,7 @@ kawaii-mobile/
 **核心依赖**
 ```yaml
 dependencies:
-  flutter: ^3.0.0
+  flutter: ^3.35.3
   provider: ^6.0.0        # 状态管理
   dio: ^5.0.0            # 网络请求
   hive: ^2.0.0           # 本地数据库
