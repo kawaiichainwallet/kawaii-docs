@@ -188,7 +188,7 @@ kawaii-server/
 
 | 属性 | 值 |
 |------|---|
-| **技术栈** | Next.js 15 + TypeScript |
+| **技术栈** | Next.js 15.5.3 + TypeScript + Tailwind 4 |
 | **用途** | 项目介绍、文档展示、下载页面 |
 | **部署** | Vercel / Netlify |
 
@@ -196,7 +196,7 @@ kawaii-server/
 ```
 kawaii-website/
 ├── src/
-│   ├── app/             # App Router (Next.js 15+)
+│   ├── app/             # App Router
 │   │   ├── layout.tsx   # 根布局
 │   │   ├── page.tsx     # 首页
 │   │   ├── docs/        # 文档页面
@@ -213,23 +213,6 @@ kawaii-website/
 └── next.config.js       # Next.js配置
 ```
 
-**主要页面**
-- `/` - 项目介绍首页
-- `/docs` - 开发文档
-- `/download` - 应用下载
-- `/api-docs` - API文档
-- `/blog` - 项目博客
-
-**部署脚本**
-```bash
-# 构建静态站点
-npm run build
-npm run export
-
-# 部署到 Vercel
-vercel --prod
-```
-
 ---
 
 ### 🔧 kawaii-admin
@@ -237,7 +220,7 @@ vercel --prod
 
 | 属性 | 值 |
 |------|---|
-| **技术栈** | Next.js 15+ + TypeScript + Tailwind 4 |
+| **技术栈** | Next.js 15.5.3 + TypeScript + Tailwind 4 +  + shadcn/ui |
 | **用途** | 运营数据、用户管理、系统配置 |
 | **权限** | 管理员专用 |
 
