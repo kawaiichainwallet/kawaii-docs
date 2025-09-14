@@ -112,7 +112,7 @@ flutter build ios --release     # iOS
 
 | 属性 | 值 |
 |------|---|
-| **技术栈** | Java 21 + Spring Cloud |
+| **技术栈** | Java 21 + Spring boot 3.5.5 + Spring Cloud 2025.0.0|
 | **架构** | 微服务架构 |
 | **数据库** | PostgreSQL 17 + Redis |
 | **部署** | Docker + Kubernetes |
@@ -121,16 +121,13 @@ flutter build ios --release     # iOS
 ```
 kawaii-server/
 ├── kawaii-gateway/      # API网关
-├── kawaii-eureka/       # 注册中心
-├── kawaii-config/       # 配置中心
 ├── kawaii-auth/         # 认证服务
 ├── kawaii-user/         # 用户服务
 ├── kawaii-core/         # 钱包核心服务
 ├── kawaii-payment/      # 支付服务
 ├── kawaii-merchant/     # 商户服务
 ├── kawaii-notification/ # 通知服务
-├── kawaii-common/       # 公共模块
-└── docker-compose.yml   # 本地开发环境
+└── kawaii-common/       # 公共模块
 ```
 
 **服务详情**
@@ -170,30 +167,18 @@ kawaii-server/
 // 数据库: transaction_db
 ```
 
-**部署配置**
-```yaml
-# docker-compose.yml
-version: '3.8'
-services:
-  mysql:
-    image: mysql:8.0
-    environment:
-      MYSQL_ROOT_PASSWORD: wallet123
-      MYSQL_DATABASE: wallet_db
-    ports:
-      - "3306:3306"
-  
-  redis:
-    image: redis:7.0
-    ports:
-      - "6379:6379"
-  
-  wallet-gateway:
-    build: ./wallet-gateway
-    ports:
-      - "8080:8080"
-    depends_on:
-      - wallet-eureka
+#### kawaii-merchant (商户服务)
+```java
+// 端口: 8085
+// 职责: 与商户服务集成
+// 数据库: merchant_db
+```
+
+#### kawaii-notification (通知服务)
+```java
+// 端口: 8086
+// 职责: 站内信、对内外信息触达
+// 数据库: notification_db
 ```
 
 ---
@@ -360,21 +345,3 @@ jobs:
       - name: Deploy
         run: npm run deploy
 ```
-
-## 环境管理
-
-### 开发环境
-- **本地开发**: Docker Compose
-- **API地址**: `http://localhost:8080`
-- **数据库**: 本地MySQL/Redis
-
-### 测试环境  
-- **部署方式**: Kubernetes
-- **API地址**: `https://api-test.kawaiichainwallet.com`
-- **用途**: 功能测试、集成测试
-
-### 生产环境
-- **部署方式**: Kubernetes集群
-- **API地址**: `https://api.kawaiichainwallet.com`
-- **监控**: Prometheus + Grafana
-
