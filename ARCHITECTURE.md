@@ -147,8 +147,8 @@ src/
 
 ### MySQL - 主数据库
 
-[数据库设计](./DATABASE.md) - 基于PostgreSQL的数据库设计
-[数据库运维](./DATABASE-OPERATIONS.md) - 基于PostgreSQL的数据运维计划
+* [数据库设计](./DATABASE.md) - 基于PostgreSQL的数据库设计
+* [数据库运维](./DATABASE-OPERATIONS.md) - 基于PostgreSQL的数据运维计划
 
 ### Redis - 缓存层
 

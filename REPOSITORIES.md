@@ -40,13 +40,8 @@ kawaii-docs/
 │   ├── user-guide/      # 用户指南
 │   ├── developer/       # 开发者文档
 │   └── deployment/      # 部署文档
-└── assets/              # 图片和资源
+└── images/              # 图片资源
 ```
-
-**重要文件**
-- `README.md` - 项目入口介绍
-- `API.md` - 完整API接口文档
-- `docs/developer/` - 开发者集成指南
 
 ---
 
