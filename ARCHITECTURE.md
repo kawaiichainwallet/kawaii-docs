@@ -327,19 +327,19 @@ public class WalletController {
 
 ```java
 // 统一错误响应
-public class ApiResponse<T> {
+public class R<T> {
     private int code;
     private String message;
     private T data;
     
     // 成功响应
-    public static <T> ApiResponse<T> success(T data) {
-        return new ApiResponse<>(200, "Success", data);
+    public static <T> R<T> success(T data) {
+        return new R<>(200, "Success", data);
     }
     
     // 错误响应
-    public static <T> ApiResponse<T> error(int code, String message) {
-        return new ApiResponse<>(code, message, null);
+    public static <T> R<T> error(int code, String message) {
+        return new R<>(code, message, null);
     }
 }
 ```

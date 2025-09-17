@@ -183,7 +183,7 @@ CREATE TABLE wallets (
     -- 助记词相关 (加密存储)
     mnemonic_encrypted BYTEA,
     seed_encrypted BYTEA,
-    derivation_path VARCHAR(100) DEFAULT "m/44'/60'/0'/0", -- BIP44 path
+    derivation_path VARCHAR(100) DEFAULT 'm/44''/60''/0''/0', -- BIP44 path
     
     -- 安全设置
     encryption_method VARCHAR(20) DEFAULT 'aes256',

@@ -145,7 +145,7 @@ kawaii-server/
 ```java
 // 端口: 8082
 // 职责: 用户注册、资料管理、KYC验证
-// 数据库: user_db
+// 数据库: user
 ```
 
 #### kawaii-core (钱包核心服务)
@@ -159,21 +159,21 @@ kawaii-server/
 ```java
 // 端口: 8084
 // 职责: 转账处理、交易记录、风控检查
-// 数据库: transaction_db
+// 数据库: transaction
 ```
 
 #### kawaii-merchant (商户服务)
 ```java
 // 端口: 8085
 // 职责: 与商户服务集成
-// 数据库: merchant_db
+// 数据库: merchant
 ```
 
 #### kawaii-notification (通知服务)
 ```java
 // 端口: 8086
 // 职责: 站内信、对内外信息触达
-// 数据库: notification_db
+// 数据库: notification
 ```
 
 ---
@@ -287,9 +287,7 @@ graph TB
 
 ### 1. 分支策略
 ```
-main              # 生产环境
-├── develop       # 开发环境
-├── feature/*     # 功能分支
+main              # 开发环境
 ├── hotfix/*      # 紧急修复
 └── release/*     # 发布分支
 ```
