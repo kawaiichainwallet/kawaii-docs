@@ -15,15 +15,16 @@
          └───────────────────────┼───────────────────────┘
                                  │
                     ┌─────────────────┐
-                    │  API Gateway    │
-                    │   (Spring)      │
+                    │  API Gateway    │ ← 统一认证 & 路由
+                    │ (Spring Cloud)  │   限流 & CORS
                     └─────────────────┘
                                  │
          ┌───────────────────────┼───────────────────────┐
          │                       │                       │
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
 │  User Service   │    │ Wallet Service  │    │Payment Service  │
-│  (Spring Boot)  │    │ (Spring Boot)   │    │ (Spring Boot)   │
+│  (Spring Boot)  │◄───│ (Spring Boot)   │◄───│ (Spring Boot)   │
+│  + Auth功能     │    │                 │    │                 │
 └─────────────────┘    └─────────────────┘    └─────────────────┘
          │                       │                       │
          └───────────────────────┼───────────────────────┘
@@ -33,6 +34,13 @@
                     │ (PostgreSQL/Redis)│
                     └───────────────────┘
 ```
+
+**架构特点**:
+- **合并认证服务**: 认证功能集成到kawaii-user服务中，简化架构
+- **统一网关**: 在Gateway层实现统一认证、路由、限流
+- **服务间通信**: 使用Spring Cloud OpenFeign实现服务间调用
+- **API响应标准化**: 统一使用R<T>响应格式
+- **内部认证**: 服务间调用使用内部Token验证
 
 ## 技术栈详情
 
@@ -77,48 +85,68 @@ lib/
 
 **微服务划分**
 
-#### 1. 用户服务 (User Service)
-```java
-// 主要职责
-- 用户注册登录
-- 身份验证和授权
-- 用户信息管理
-- KYC 验证
+#### 1. API网关 (kawaii-gateway)
+```yaml
+端口: 8090
+主要职责:
+  - 统一认证和鉴权
+  - 路由转发和负载均衡
+  - 请求限流和CORS处理
+  - 服务间调用协调
 
-// 技术栈
-- Spring Boot 3.5.x
-- Spring Security + JWT
-- PostgreSQL 17
-- Redis 7.0
+技术栈:
+  - Spring Cloud Gateway
+  - JWT Token验证
+  - Redis限流
+  - OpenFeign客户端
 ```
 
-#### 2. 钱包服务 (Wallet Service)
-```java
-// 主要职责
-- 钱包创建和导入
-- 私钥安全管理
-- 地址生成和验证
-- 交易签名
+#### 2. 用户服务 (kawaii-user)
+```yaml
+端口: 8082
+主要职责:
+  - 用户注册登录管理
+  - 身份验证和授权（集成认证功能）
+  - 用户信息和KYC管理
+  - JWT Token生成和验证
 
-// 技术栈
-- Spring Boot 3.5.x
-- Web3j (以太坊)
-- BitcoinJ (比特币)
-- HSM (硬件安全模块)
+技术栈:
+  - Spring Boot 3.5.x
+  - Spring Security + OAuth2
+  - MyBatis-Plus + PostgreSQL
+  - Nimbus JOSE + JWT
+  - MapStruct对象映射
 ```
 
-#### 3. 支付服务 (Payment Service)
-```java
-// 主要职责
-- 转账交易处理
-- 商户支付集成
-- 交易记录管理
-- 风险控制
+#### 3. 钱包核心服务 (kawaii-core)
+```yaml
+端口: 8083
+主要职责:
+  - 钱包创建和导入
+  - 私钥安全管理
+  - 地址生成和验证
+  - 交易签名和处理
 
-// 技术栈
-- Spring Boot 3.5.x
-- RabbitMQ (消息队列)
-- MongoDB (交易记录)
+技术栈:
+  - Spring Boot 3.5.x
+  - Web3j (以太坊)
+  - BitcoinJ (比特币)
+  - OpenFeign用户服务调用
+```
+
+#### 4. 支付服务 (kawaii-payment)
+```yaml
+端口: 8084
+主要职责:
+  - 转账交易处理
+  - 商户支付集成
+  - 交易记录管理
+  - 风险控制
+
+技术栈:
+  - Spring Boot 3.5.x
+  - OpenFeign服务间调用
+  - 事务管理和风控
 - Elasticsearch (搜索)
 ```
 

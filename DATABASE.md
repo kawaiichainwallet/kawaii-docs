@@ -33,8 +33,7 @@ CREATE TABLE users (
     username VARCHAR(50) UNIQUE NOT NULL,
     email VARCHAR(100) UNIQUE NOT NULL,
     phone VARCHAR(20),
-    password_hash VARCHAR(255) NOT NULL,
-    salt VARCHAR(50) NOT NULL,
+    password_hash VARCHAR(255) NOT NULL, -- BCrypt加密存储，包含内置盐值
     
     -- 状态管理
     status VARCHAR(20) DEFAULT 'active' CHECK (status IN ('active', 'inactive', 'suspended', 'deleted')),
@@ -634,6 +633,96 @@ CREATE INDEX idx_audit_logs_action ON audit_logs(action);
 CREATE INDEX idx_audit_logs_resource ON audit_logs(resource_type, resource_id);
 CREATE INDEX idx_audit_logs_created_at ON audit_logs(created_at);
 ```
+
+### 8. JWT黑名单管理
+
+#### 8.1 JWT黑名单表 (jwt_blacklist)
+
+```sql
+CREATE TABLE jwt_blacklist (
+    id BIGSERIAL PRIMARY KEY,
+    token_id VARCHAR(100) NOT NULL UNIQUE, -- JWT的jti claim
+    user_id UUID NOT NULL REFERENCES users(user_id),
+    token_type VARCHAR(20) DEFAULT 'access' CHECK (token_type IN ('access', 'refresh')),
+    expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    blacklisted_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    reason VARCHAR(100) DEFAULT 'logout' -- logout, force_logout, security
+);
+
+-- 索引
+CREATE INDEX idx_jwt_blacklist_token_id ON jwt_blacklist(token_id);
+CREATE INDEX idx_jwt_blacklist_user_id ON jwt_blacklist(user_id);
+CREATE INDEX idx_jwt_blacklist_expires_at ON jwt_blacklist(expires_at);
+CREATE INDEX idx_jwt_blacklist_active ON jwt_blacklist(expires_at) WHERE expires_at > CURRENT_TIMESTAMP;
+```
+
+#### 8.2 JWT黑名单清理函数
+
+```sql
+-- 定期清理过期的黑名单记录
+CREATE OR REPLACE FUNCTION cleanup_expired_blacklist()
+RETURNS INTEGER AS $$
+DECLARE
+    deleted_count INTEGER;
+BEGIN
+    DELETE FROM jwt_blacklist WHERE expires_at < CURRENT_TIMESTAMP;
+    GET DIAGNOSTICS deleted_count = ROW_COUNT;
+
+    -- 记录清理结果
+    INSERT INTO audit_logs (
+        action,
+        resource_type,
+        success,
+        metadata
+    ) VALUES (
+        'CLEANUP',
+        'jwt_blacklist',
+        TRUE,
+        jsonb_build_object('deleted_count', deleted_count)
+    );
+
+    RETURN deleted_count;
+END;
+$$ LANGUAGE plpgsql;
+```
+
+### 9. 数据维护说明
+
+#### 9.1 更新时间维护
+
+系统中的`updated_at`字段维护策略：
+
+- **应用层处理**: 所有数据更新操作在应用代码中手动设置`updated_at = CURRENT_TIMESTAMP`
+- **分布式任务调度**: 使用分布式任务调度工具处理定时维护任务
+- **无触发器设计**: 避免使用数据库触发器，保持数据库简洁和性能
+
+**应用层实现示例**:
+```java
+// MyBatis-Plus实体自动填充
+@Data
+@TableName("users")
+public class User extends BaseEntity {
+    @TableField(fill = FieldFill.INSERT_UPDATE)
+    private LocalDateTime updatedAt;
+}
+
+// Service层手动维护
+user.setUpdatedAt(LocalDateTime.now());
+userMapper.updateById(user);
+```
+
+## 部署架构
+
+### 开发环境
+- **数据库**: 单机PostgreSQL 17
+- **连接池**: PgBouncer
+- **监控**: pg_stat_statements
+
+### 生产环境
+- **数据库**: PostgreSQL 17主从集群
+- **高可用**: PostgreSQL自动故障转移
+- **备份**: 定期全量备份 + WAL归档
+- **监控**: Prometheus + PostgreSQL Exporter
 
 ## 免责声明
 

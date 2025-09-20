@@ -349,45 +349,78 @@ $ LANGUAGE plpgsql;
 COMMENT ON FUNCTION cleanup_temp_data() IS '临时数据清理主函数，执行多种类型的数据清理操作';
 ```
 
-### 3. 定时维护任务
+### 3. 分布式任务调度策略
 
-```sql
--- 创建维护任务配置表
-CREATE TABLE maintenance_jobs (
-    job_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    job_name VARCHAR(100) UNIQUE NOT NULL,
-    job_function VARCHAR(200) NOT NULL,
-    schedule_cron VARCHAR(50) NOT NULL,
-    is_enabled BOOLEAN DEFAULT TRUE,
-    last_run_at TIMESTAMP WITH TIME ZONE,
-    last_run_status VARCHAR(20),
-    last_run_result TEXT,
-    next_run_at TIMESTAMP WITH TIME ZONE,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-);
+数据库维护任务将通过分布式任务调度工具（如XXL-JOB、Quartz、Spring Cloud Task等）进行管理：
 
-COMMENT ON TABLE maintenance_jobs IS '维护任务配置表，存储定时执行的数据库维护任务信息';
+#### 3.1 推荐的维护任务调度配置
 
--- 字段注释
-COMMENT ON COLUMN maintenance_jobs.job_id IS '维护任务唯一标识符';
-COMMENT ON COLUMN maintenance_jobs.job_name IS '任务名称，如transaction_archive、log_cleanup等';
-COMMENT ON COLUMN maintenance_jobs.job_function IS '执行的函数名称';
-COMMENT ON COLUMN maintenance_jobs.schedule_cron IS 'Cron表达式，定义任务执行时间';
-COMMENT ON COLUMN maintenance_jobs.is_enabled IS '任务是否启用';
-COMMENT ON COLUMN maintenance_jobs.last_run_at IS '最后执行时间';
-COMMENT ON COLUMN maintenance_jobs.last_run_status IS '最后执行状态：success, failed, running';
-COMMENT ON COLUMN maintenance_jobs.last_run_result IS '最后执行结果详情';
-COMMENT ON COLUMN maintenance_jobs.next_run_at IS '下次计划执行时间';
+```yaml
+# 示例：Spring Boot + Quartz 配置
+maintenance-jobs:
+  transaction-archive:
+    cron: "0 0 2 1 * ?" # 每月1日凌晨2点
+    function: "transactionArchiveTask.execute()"
+    description: "交易数据归档任务"
 
--- 插入默认维护任务
-INSERT INTO maintenance_jobs (job_name, job_function, schedule_cron, is_enabled) VALUES
-('transaction_archive', 'archive_old_transactions()', '0 2 1 * *', TRUE),  -- 每月1日凌晨2点
-('audit_log_archive', 'archive_old_audit_logs()', '0 3 1 * *', TRUE),    -- 每月1日凌晨3点
-('notification_cleanup', 'cleanup_old_notifications()', '0 1 * * *', TRUE), -- 每日凌晨1点
-('temp_data_cleanup', 'cleanup_temp_data()', '0 4 * * 0', TRUE);        -- 每周日凌晨4点
+  audit-log-archive:
+    cron: "0 0 3 1 * ?" # 每月1日凌晨3点
+    function: "auditLogArchiveTask.execute()"
+    description: "审计日志归档任务"
 
--- 创建索引
-CREATE INDEX idx_maintenance_jobs_enabled ON maintenance_jobs(is_enabled);
-CREATE INDEX idx_maintenance_jobs_next_run ON maintenance_jobs(next_run_at) WHERE is_enabled = TRUE;
+  notification-cleanup:
+    cron: "0 0 1 * * ?" # 每日凌晨1点
+    function: "notificationCleanupTask.execute()"
+    description: "通知数据清理任务"
+
+  temp-data-cleanup:
+    cron: "0 0 4 ? * SUN" # 每周日凌晨4点
+    function: "tempDataCleanupTask.execute()"
+    description: "临时数据清理任务"
+
+  jwt-blacklist-cleanup:
+    cron: "0 0 * * * ?" # 每小时执行
+    function: "jwtBlacklistCleanupTask.execute()"
+    description: "JWT黑名单清理任务"
 ```
+
+#### 3.2 Spring Boot实现示例
+
+```java
+@Component
+@Slf4j
+public class DatabaseMaintenanceTask {
+
+    @Autowired
+    private MaintenanceService maintenanceService;
+
+    @Scheduled(cron = "0 0 2 1 * ?") // 每月1日凌晨2点
+    public void executeTransactionArchive() {
+        log.info("开始执行交易数据归档任务");
+        try {
+            int archived = maintenanceService.archiveOldTransactions();
+            log.info("交易数据归档完成，归档记录数: {}", archived);
+        } catch (Exception e) {
+            log.error("交易数据归档失败", e);
+        }
+    }
+
+    @Scheduled(cron = "0 0 1 * * ?") // 每日凌晨1点
+    public void executeNotificationCleanup() {
+        log.info("开始执行通知清理任务");
+        try {
+            int cleaned = maintenanceService.cleanupOldNotifications();
+            log.info("通知清理完成，清理记录数: {}", cleaned);
+        } catch (Exception e) {
+            log.error("通知清理失败", e);
+        }
+    }
+}
+```
+
+#### 3.3 任务监控和管理
+
+- **任务执行日志**: 记录在应用日志和audit_logs表中
+- **任务状态监控**: 通过应用监控系统（如Micrometer + Prometheus）监控
+- **任务失败告警**: 集成钉钉、企业微信等告警渠道
+- **任务可视化管理**: 通过管理后台界面控制任务启停
